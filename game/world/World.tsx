@@ -1,26 +1,28 @@
 import { Sky } from "@react-three/drei";
-import Ground from "./Ground";
-import Buildings from "../buildings/Buildings";
 import Player from "../player/Player";
-import Trees from "./Trees";
-import WaypointMarkers from "./WaypointMarkers";
+import AnnouncementBoards from "./AnnouncementBoards";
+import Ground from "./Ground";
+import InterestProps from "./interests/InterestProps";
 import TeleportEffect from "./TeleportEffect";
+import WaypointMarkers from "./WaypointMarkers";
+import DynamicSky from "./DynamicSky";
 
 export default function World() {
   return (
     <>
-      <Sky sunPosition={[100, 20, 100]} />
+       <DynamicSky />
 
-      <ambientLight intensity={1} />
       <gridHelper args={[100, 100]} />
-      <directionalLight position={[10, 10, 5]} intensity={2} castShadow />
-
       <Ground />
-      <Buildings />
+      {/* <Buildings /> */}
       <WaypointMarkers />
+      <AnnouncementBoards />
       <TeleportEffect />
       <Player />
       {/* <Trees /> */}
+
+      {/* About me props */}
+      <InterestProps />
     </>
   );
 }
