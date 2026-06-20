@@ -68,13 +68,21 @@ export default function Player({
   const isTeleportAnimating = useRef(false);
 
   // Custom hooks for separation of concerns
-  const { updateMovement, isMoving, isJumpRequested } =
-    usePlayerMovement(playerRef);
-  const { applyGravity, jump, onGround } = usePlayerPhysics(playerRef);
-  const { updateCamera } = usePlayerCamera(camera);
-  const { updateWalkAnimation, updateBreathingAnimation } = usePlayerAnimation(
-    characterRefs || {},
+  
+  const { updateCamera, getAzimuth } = usePlayerCamera(camera);
+  const { updateMovement, isMoving, isJumpRequested } = usePlayerMovement(
+    playerRef,
+    getAzimuth,
   );
+  const { applyGravity, jump, onGround } = usePlayerPhysics(playerRef);
+const { updateWalkAnimation, updateBreathingAnimation } = usePlayerAnimation(
+  characterRefs
+    ? {
+        ...characterRefs,
+        // characterRefs already has leftLowerArmRef/rightLowerArmRef by name match
+      }
+    : {},
+);
 
   // Handle character refs ready
   const handleRefsReady = useCallback((refs: CharacterRefs) => {
@@ -178,13 +186,13 @@ export default function Player({
 
         setRotation(rightUpperArmRef, 0, 0, Math.PI * 0.5 * easeOut);
         setRotation(rightLowerArmRef, 0, 0, Math.PI * 0.5 * easeOut);
- } else if (phase === "posing") {
-  const poseElapsed = elapsed - TELEPORT_TIMING.prepare;
-  const waveAngle = Math.sin(poseElapsed * 6) * 0.3; // 6 rad/s, 0.3 rad swing
+      } else if (phase === "posing") {
+        const poseElapsed = elapsed - TELEPORT_TIMING.prepare;
+        const waveAngle = Math.sin(poseElapsed * 6) * 0.3; // 6 rad/s, 0.3 rad swing
 
-  setRotation(rightUpperArmRef, 0, 0, Math.PI * 0.5); // hold raised
-  setRotation(rightLowerArmRef, 0, 0, Math.PI * 0.5 + waveAngle); // base bend + wiggle
-}
+        setRotation(rightUpperArmRef, 0, 0, Math.PI * 0.5); // hold raised
+        setRotation(rightLowerArmRef, 0, 0, Math.PI * 0.5 + waveAngle); // base bend + wiggle
+      }
     },
     [characterRefs],
   );
@@ -424,7 +432,7 @@ export default function Player({
       animateParticles();
 
       // Update camera during teleport
-      updateCamera(playerRef.current.position);
+      updateCamera(playerRef.current.position, false);
       return; // Skip normal movement during teleport
     }
 
@@ -444,7 +452,7 @@ export default function Player({
     }
 
     // Update camera to follow player
-    updateCamera(playerRef.current.position);
+    updateCamera(playerRef.current.position, isMoving());
 
     // Update animations
     const isWalking =

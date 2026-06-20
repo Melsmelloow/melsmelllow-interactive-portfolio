@@ -3,7 +3,7 @@ import * as THREE from "three";
 
 const GRAVITY = -9.81;
 const JUMP_FORCE = 5;
-const GROUND_LEVEL = 1;
+const GROUND_LEVEL = .5;
 
 export function usePlayerPhysics(playerRef: React.RefObject<THREE.Group | null>) {
   const velocityY = useRef(0);

@@ -25,7 +25,7 @@ export const Arm = forwardRef<THREE.Group, ArmProps & {
     lowerArmRef: React.RefObject<THREE.Group | null>;
     handRef: React.RefObject<THREE.Group | null>;
   }, ref) => {
-    const xOffset = side === "left" ? -0.7 : 0.7;
+    const xOffset = side === "left" ? -0.6 : 0.6;
     const directionMult = side === "left" ? 1 : -1;
 
     // Call callback when refs are ready

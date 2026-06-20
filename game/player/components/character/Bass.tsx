@@ -4,15 +4,19 @@ interface BassProps {
   bodyColor?: string;
   neckColor?: string;
   stringColor?: string;
+  strapColor?: string;
+  scale?: number;
 }
 
 export function Bass({
   bodyColor = "#8B4513",
   neckColor = "#D2691E",
   stringColor = "#C0C0C0",
+  strapColor = "#FFFFFF",
+  scale = 1.6,
 }: BassProps) {
   return (
-    <group position={[0.8, 1.5, 0.3]} rotation={[0, 0, -0.3]}>
+    <group position={[0, 0.9, -0.5]} rotation={[0, 0, 0.4]} scale={scale}>
       {/* Bass body */}
       <mesh position={[0, 0, 0]}>
         <boxGeometry args={[0.3, 0.4, 0.1]} />
@@ -36,6 +40,7 @@ export function Bass({
         <boxGeometry args={[0.02, 0.6, 0.01]} />
         <meshStandardMaterial color={stringColor} />
       </mesh>
+
     </group>
   );
 }

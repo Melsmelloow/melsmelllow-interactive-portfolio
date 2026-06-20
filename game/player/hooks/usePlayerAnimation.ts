@@ -11,6 +11,8 @@ interface AnimationRefs {
   rightLegRef?: React.RefObject<THREE.Mesh | THREE.Group | null>;
   leftUpperArmRef?: React.RefObject<THREE.Mesh | THREE.Group | null>;
   rightUpperArmRef?: React.RefObject<THREE.Mesh | THREE.Group | null>;
+  leftLowerArmRef?: React.RefObject<THREE.Mesh | THREE.Group | null>;
+  rightLowerArmRef?: React.RefObject<THREE.Mesh | THREE.Group | null>;
   bodyRef?: React.RefObject<THREE.Mesh | null>;
 }
 
@@ -25,10 +27,12 @@ export function usePlayerAnimation(animationRefs: AnimationRefs) {
         rightLegRef,
         leftUpperArmRef,
         rightUpperArmRef,
+        leftLowerArmRef,
+        rightLowerArmRef,
       } = animationRefs;
 
       if (!isWalking) {
-        // Reset to idle position
+        // Reset to idle position — now includes lower arms
         if (leftLegRef?.current) {
           (leftLegRef.current as THREE.Group).rotation.x = 0;
         }
@@ -36,10 +40,16 @@ export function usePlayerAnimation(animationRefs: AnimationRefs) {
           (rightLegRef.current as THREE.Group).rotation.x = 0;
         }
         if (leftUpperArmRef?.current) {
-          (leftUpperArmRef.current as THREE.Group).rotation.x = 0;
+          (leftUpperArmRef.current as THREE.Group).rotation.set(0, 0, 0);
         }
         if (rightUpperArmRef?.current) {
-          (rightUpperArmRef.current as THREE.Group).rotation.x = 0;
+          (rightUpperArmRef.current as THREE.Group).rotation.set(0, 0, 0);
+        }
+        if (leftLowerArmRef?.current) {
+          (leftLowerArmRef.current as THREE.Group).rotation.set(0, 0, 0);
+        }
+        if (rightLowerArmRef?.current) {
+          (rightLowerArmRef.current as THREE.Group).rotation.set(0, 0, 0);
         }
         return;
       }
@@ -63,6 +73,15 @@ export function usePlayerAnimation(animationRefs: AnimationRefs) {
       if (rightUpperArmRef?.current) {
         (rightUpperArmRef.current as THREE.Group).rotation.x = angle;
       }
+
+      // Lower arms stay straight while walking (no separate swing),
+      // but must be explicitly zeroed so a leftover teleport rotation doesn't persist
+      if (leftLowerArmRef?.current) {
+        (leftLowerArmRef.current as THREE.Group).rotation.set(0, 0, 0);
+      }
+      if (rightLowerArmRef?.current) {
+        (rightLowerArmRef.current as THREE.Group).rotation.set(0, 0, 0);
+      }
     },
     [animationRefs]
   );
@@ -73,18 +92,14 @@ export function usePlayerAnimation(animationRefs: AnimationRefs) {
 
       if (!bodyRef?.current) return;
 
-      // Only apply breathing animation when on ground (idle/walking)
       if (!isOnGround) {
-        // Reset to normal scale when in the air (jumping)
         (bodyRef.current as THREE.Mesh).scale.y = 1;
         return;
       }
 
-      // Update breathing cycle
       breathingCycle.current += delta * BREATHING_SPEED;
       const breathingScale = 1 + Math.sin(breathingCycle.current) * BREATHING_AMPLITUDE;
 
-      // Apply subtle breathing animation to body
       (bodyRef.current as THREE.Mesh).scale.y = breathingScale;
     },
     [animationRefs]

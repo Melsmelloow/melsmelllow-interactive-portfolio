@@ -4,7 +4,10 @@ import type { PlayerKeys } from "../types/player.types";
 
 const MOVEMENT_SPEED = 5;
 
-export function usePlayerMovement(playerRef: React.RefObject<THREE.Group | null>) {
+export function usePlayerMovement(
+  playerRef: React.RefObject<THREE.Group | null>,
+  getAzimuth: () => number,
+) {
   const keys = useRef<PlayerKeys>({
     w: false,
     a: false,
@@ -70,33 +73,48 @@ export function usePlayerMovement(playerRef: React.RefObject<THREE.Group | null>
       if (!playerRef.current) return;
 
       const { w, a, s, d } = keys.current;
+      if (!w && !a && !s && !d) return;
 
-      // Calculate movement direction
-      if (w) {
-        targetRotation.current = Math.PI;
-        playerRef.current.position.z -= MOVEMENT_SPEED * delta;
+      // Raw input vector in "camera-local" space:
+      // local -Z = forward (away from camera), local +X = right
+      let inputX = 0;
+      let inputZ = 0;
+      if (w) inputZ -= 1;
+      if (s) inputZ += 1;
+      if (a) inputX -= 1;
+      if (d) inputX += 1;
+
+      // Normalize so diagonal movement isn't faster
+      const length = Math.hypot(inputX, inputZ);
+      if (length > 0) {
+        inputX /= length;
+        inputZ /= length;
       }
-      if (s) {
-        targetRotation.current = 0;
-        playerRef.current.position.z += MOVEMENT_SPEED * delta;
-      }
-      if (a) {
-        targetRotation.current = -Math.PI / 2;
-        playerRef.current.position.x -= MOVEMENT_SPEED * delta;
-      }
-      if (d) {
-        targetRotation.current = Math.PI / 2;
-        playerRef.current.position.x += MOVEMENT_SPEED * delta;
+
+      // Rotate the input vector by the camera's azimuth so movement
+      // is relative to where the camera is currently looking
+      const angle = getAzimuth();
+      const sin = Math.sin(angle);
+      const cos = Math.cos(angle);
+      const worldX = inputX * cos + inputZ * sin;
+      const worldZ = -inputX * sin + inputZ * cos;
+
+      playerRef.current.position.x += worldX * MOVEMENT_SPEED * delta;
+      playerRef.current.position.z += worldZ * MOVEMENT_SPEED * delta;
+
+      // Face the direction of movement (independent of camera, as requested)
+      if (worldX !== 0 || worldZ !== 0) {
+        targetRotation.current = Math.atan2(worldX, worldZ);
       }
 
       // Smooth rotation
       playerRef.current.rotation.y = THREE.MathUtils.lerp(
         playerRef.current.rotation.y,
         targetRotation.current,
-        0.15
+        0.15,
       );
     },
-    [playerRef]
+    [playerRef, getAzimuth],
   );
 
   const isMoving = useCallback(() => {
@@ -108,22 +126,12 @@ export function usePlayerMovement(playerRef: React.RefObject<THREE.Group | null>
     return keys.current.space;
   }, []);
 
-  const getVelocity = useCallback(() => {
-    const { w, a, s, d } = keys.current;
-    return new THREE.Vector3(
-      d ? MOVEMENT_SPEED : a ? -MOVEMENT_SPEED : 0,
-      0,
-      s ? MOVEMENT_SPEED : w ? -MOVEMENT_SPEED : 0
-    );
-  }, []);
-
   return {
     keys,
     targetRotation,
     updateMovement,
     isMoving,
     isJumpRequested,
-    getVelocity,
     MOVEMENT_SPEED,
   };
 }

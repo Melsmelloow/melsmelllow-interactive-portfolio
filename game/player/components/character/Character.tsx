@@ -110,7 +110,7 @@ export const Character = forwardRef<CharacterRefs, CharacterProps>(
         />
 
         {/* Bass (optional) */}
-        {showBass && <Bass />}
+        <Bass />
       </group>
     );
   }
