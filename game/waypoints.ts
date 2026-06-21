@@ -1,6 +1,15 @@
 import * as THREE from "three";
 import type { Waypoint } from "@/store/useGameStore";
 
+// Room/interior centers — used by DisplayRoom, InterestProps, etc.
+export const ROOM_CENTERS = {
+  about: new THREE.Vector3(0, 0, 15),
+  skills: new THREE.Vector3(0, 0, -15),
+  projects: new THREE.Vector3(15, 0, 0),
+  contact: new THREE.Vector3(-15, 0, 0),
+  experience: new THREE.Vector3(10, 0, 10),
+};
+
 export const waypoints: Waypoint[] = [
   {
     id: "home",
@@ -15,11 +24,13 @@ export const waypoints: Waypoint[] = [
   {
     id: "about",
     label: "About",
-    position: new THREE.Vector3(0, 0, 15),
+    position: new THREE.Vector3(0, 0, 23), // outside the room entrance (teleport target)
     description: "Learn more about me",
     boardContent: {
       title: "About Me",
       body: "Your about text here...",
+      position: new THREE.Vector3(-8, 0, 15), // board's own world position, inside the room
+      rotation: [0, Math.PI / 2, 0], // facing West
     },
   },
   {

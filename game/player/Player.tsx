@@ -10,6 +10,7 @@ import { usePlayerPhysics } from "./hooks/usePlayerPhysics";
 import { usePlayerCamera } from "./hooks/usePlayerCamera";
 import { usePlayerAnimation } from "./hooks/usePlayerAnimation";
 import { useGameStore } from "@/store/useGameStore";
+import { useAudioStore } from "@/store/useAudioStore";
 
 interface PlayerProps {
   showBass?: boolean;
@@ -67,22 +68,33 @@ export default function Player({
   const originalMaterialOpacity = useRef<Map<THREE.Mesh, number>>(new Map());
   const isTeleportAnimating = useRef(false);
 
+  // audio
+  const updateVolumeFromPlayerPosition = useAudioStore(
+    (s) => s.updateVolumeFromPlayerPosition,
+  );
+
   // Custom hooks for separation of concerns
-  
-  const { updateCamera, getAzimuth } = usePlayerCamera(camera);
+
+  const occludersRef = useRef<THREE.Object3D | null>(null);
+
+  useEffect(() => {
+    occludersRef.current = scene.getObjectByName("occluders") ?? null;
+  }, [scene]);
+
+  const { updateCamera, updateOcclusion, getAzimuth } = usePlayerCamera(camera);
   const { updateMovement, isMoving, isJumpRequested } = usePlayerMovement(
     playerRef,
     getAzimuth,
   );
   const { applyGravity, jump, onGround } = usePlayerPhysics(playerRef);
-const { updateWalkAnimation, updateBreathingAnimation } = usePlayerAnimation(
-  characterRefs
-    ? {
-        ...characterRefs,
-        // characterRefs already has leftLowerArmRef/rightLowerArmRef by name match
-      }
-    : {},
-);
+  const { updateWalkAnimation, updateBreathingAnimation } = usePlayerAnimation(
+    characterRefs
+      ? {
+          ...characterRefs,
+          // characterRefs already has leftLowerArmRef/rightLowerArmRef by name match
+        }
+      : {},
+  );
 
   // Handle character refs ready
   const handleRefsReady = useCallback((refs: CharacterRefs) => {
@@ -315,6 +327,8 @@ const { updateWalkAnimation, updateBreathingAnimation } = usePlayerAnimation(
   useFrame((_, delta) => {
     if (!playerRef.current) return;
 
+    // Inside your main useFrame, alongside updateCamera/updateOcclusion:
+    updateVolumeFromPlayerPosition(playerRef.current.position);
     // Handle teleportation animation
     if (
       isTeleportAnimating.current &&
@@ -433,6 +447,9 @@ const { updateWalkAnimation, updateBreathingAnimation } = usePlayerAnimation(
 
       // Update camera during teleport
       updateCamera(playerRef.current.position, false);
+      if (occludersRef.current) {
+        updateOcclusion(occludersRef.current, playerRef.current.position);
+      }
       return; // Skip normal movement during teleport
     }
 
@@ -454,6 +471,9 @@ const { updateWalkAnimation, updateBreathingAnimation } = usePlayerAnimation(
     // Update camera to follow player
     updateCamera(playerRef.current.position, isMoving());
 
+    if (occludersRef.current) {
+      updateOcclusion(occludersRef.current, playerRef.current.position);
+    }
     // Update animations
     const isWalking =
       isMoving() && onGround && teleportPhase.current === "idle";

@@ -11,10 +11,10 @@ export interface Waypoint {
   boardContent?: {
     title: string;
     body: string;
-    image?: string;
+    position?: THREE.Vector3; // NEW: optional explicit board position
+    rotation?: [number, number, number]; // NEW: optional explicit board rotation
   };
 }
-
 interface GameState {
   // Dialog state
   showDialog: boolean;
@@ -53,7 +53,7 @@ export const useGameStore = create<GameState>((set) => ({
   teleportTarget: null,
   isTeleporting: false,
   currentWaypoint: null,
-  
+
   activeBoardId: null,
   openBoardView: (id) => set({ activeBoardId: id }),
   closeBoardView: () => set({ activeBoardId: null }),

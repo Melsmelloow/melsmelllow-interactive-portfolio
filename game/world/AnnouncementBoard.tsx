@@ -6,6 +6,7 @@ import { useGameStore } from "@/store/useGameStore";
 
 interface AnnouncementBoardProps {
   position: THREE.Vector3;
+  rotation?: [number, number, number]; // new: optional rotation, defaults to facing +Z
   id: string;
   title: string;
   body: string;
@@ -13,6 +14,7 @@ interface AnnouncementBoardProps {
 
 export default function AnnouncementBoard({
   position,
+  rotation = [0, 0, 0],
   id,
   title,
   body,
@@ -25,8 +27,6 @@ export default function AnnouncementBoard({
     openBoardView(id);
   };
 
-  // Generate a canvas texture with the title + body baked onto it,
-  // styled to look like a printed poster pinned to the cork board.
   const boardTexture = useMemo(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 512;
@@ -34,11 +34,9 @@ export default function AnnouncementBoard({
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
-    // Cork background
     ctx.fillStyle = "#C8965A";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Subtle cork texture speckling
     ctx.fillStyle = "rgba(139, 90, 43, 0.15)";
     for (let i = 0; i < 200; i++) {
       const x = Math.random() * canvas.width;
@@ -49,7 +47,6 @@ export default function AnnouncementBoard({
       ctx.fill();
     }
 
-    // "Paper" poster area
     const paperX = 40;
     const paperY = 30;
     const paperW = canvas.width - 80;
@@ -60,26 +57,22 @@ export default function AnnouncementBoard({
     ctx.lineWidth = 2;
     ctx.strokeRect(paperX, paperY, paperW, paperH);
 
-    // Pin
     ctx.fillStyle = "#cc3333";
     ctx.beginPath();
     ctx.arc(canvas.width / 2, paperY - 4, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    // Title
     ctx.fillStyle = "#2b2b2b";
     ctx.font = "bold 38px sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(title, canvas.width / 2, paperY + 60);
 
-    // Divider line
     ctx.strokeStyle = "rgba(0,0,0,0.2)";
     ctx.beginPath();
     ctx.moveTo(paperX + 30, paperY + 80);
     ctx.lineTo(paperX + paperW - 30, paperY + 80);
     ctx.stroke();
 
-    // Body text, word-wrapped
     ctx.font = "20px sans-serif";
     ctx.fillStyle = "#3a3a3a";
     ctx.textAlign = "left";
@@ -112,7 +105,11 @@ export default function AnnouncementBoard({
   const boardPos = [position.x + 2, position.y, position.z];
 
   return (
-    <group position={boardPos as [number, number, number]}  scale={[2, 2, 2]}>
+    <group
+      position={boardPos as [number, number, number]}
+      rotation={rotation}
+      scale={[2, 2, 2]}
+    >
       {/* Frame */}
       <mesh position={[0, 1.4, 0]}>
         <boxGeometry args={[1.7, 1.3, 0.1]} />
